@@ -1,0 +1,69 @@
+diff --recursive -u ./linux-4.4.162/include/uapi/drm/drm.h ./linux-4.4.162b/include/uapi/drm/drm.h
+--- a/include/uapi/drm/drm.h	2018-10-20 03:52:38.000000000 -0400
++++ b/include/uapi/drm/drm.h	2020-04-20 10:12:11.967746655 -0400
+@@ -54,6 +54,7 @@
+ typedef uint32_t __u32;
+ typedef int64_t  __s64;
+ typedef uint64_t __u64;
++typedef size_t __kernel_size_t;
+ typedef unsigned long drm_handle_t;
+ 
+ #endif
+@@ -129,11 +130,11 @@
+ 	int version_major;	  /**< Major version */
+ 	int version_minor;	  /**< Minor version */
+ 	int version_patchlevel;	  /**< Patch level */
+-	size_t name_len;	  /**< Length of name buffer */
++	__kernel_size_t name_len;	  /**< Length of name buffer */
+ 	char __user *name;	  /**< Name of driver */
+-	size_t date_len;	  /**< Length of date buffer */
++	__kernel_size_t date_len;	  /**< Length of date buffer */
+ 	char __user *date;	  /**< User-space buffer to hold date */
+-	size_t desc_len;	  /**< Length of desc buffer */
++	__kernel_size_t desc_len;	  /**< Length of desc buffer */
+ 	char __user *desc;	  /**< User-space buffer to hold desc */
+ };
+ 
+@@ -143,7 +144,7 @@
+  * \sa drmGetBusid() and drmSetBusId().
+  */
+ struct drm_unique {
+-	size_t unique_len;	  /**< Length of unique */
++	__kernel_size_t unique_len;	  /**< Length of unique */
+ 	char __user *unique;	  /**< Unique name for driver instantiation */
+ };
+ 
+diff --recursive -u ./linux-4.4.162/include/uapi/drm/drm_mode.h ./linux-4.4.162b/include/uapi/drm/drm_mode.h
+--- a/include/uapi/drm/drm_mode.h	2018-10-20 03:52:38.000000000 -0400
++++ b/include/uapi/drm/drm_mode.h	2020-04-20 10:14:16.394269931 -0400
+@@ -526,14 +526,14 @@
+ 
+ /* create a dumb scanout buffer */
+ struct drm_mode_create_dumb {
+-	uint32_t height;
+-	uint32_t width;
+-	uint32_t bpp;
+-	uint32_t flags;
++	__u32 height;
++	__u32 width;
++	__u32 bpp;
++	__u32 flags;
+ 	/* handle, pitch, size will be returned */
+-	uint32_t handle;
+-	uint32_t pitch;
+-	uint64_t size;
++	__u32 handle;
++	__u32 pitch;
++	__u64 size;
+ };
+ 
+ /* set up for mmap of a dumb scanout buffer */
+@@ -550,7 +550,7 @@
+ };
+ 
+ struct drm_mode_destroy_dumb {
+-	uint32_t handle;
++	__u32 handle;
+ };
+ 
+ /* page-flip flags are valid, plus: */
