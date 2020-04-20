@@ -15,11 +15,12 @@ popt_target := \
 	$(MAKE_JOBS) \
 	$(CROSS_TOOLS) \
 	&& $(MAKE) \
-		-C "$(build)/$(popt_dir)" \
-		$(CROSS_TOOLS) \
-		DESTDIR="$(INSTALL)" \
-		install
+	-C "$(build)/$(popt_dir)" \
+	$(CROSS_TOOLS) \
+	DESTDIR="$(INSTALL)" \
+	install
 
-popt_libraries := .libs/libpopt.so.0
+popt_libraries := .libs/libpopt.so.0 \
+		/lib/libintl.so.8
 
 popt_depends := $(musl_dep)
