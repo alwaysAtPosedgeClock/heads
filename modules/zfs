@@ -1,0 +1,32 @@
+modules-$(CONFIG_ZFS) += zfs
+
+zfs_depends := $(musl_dep)
+
+zfs_version := 0.8.3
+zfs_dir := zfs-$(zfs_version)
+zfs_tar := zfs-$(zfs_version).tar.gz
+zfs_url := https://github.com/zfsonlinux/zfs/releases/download/zfs-$(zfs_version)/$(zfs_tar)
+
+zfs_hash := 545a4897ce30c2d2dd9010a0fdb600a0d3d45805e2387093c473efc03aa9d7fd
+
+zfs_configure := \
+        CROSS_COMPILE="$(CROSS)" \
+        ./configure \
+        --host i386-elf-linux \
+        --with-tirpc \
+        --prefix / \
+        --sysconfdir=/etc \
+        --mandir=/usr/share/man \
+         --infodir=/usr/share/info \
+        --localstatedir=/var \
+        --with-linux=../linux-4.14.62 \
+        --with-linux-obj=../linux-4.14.62/linux-zbook-g3-15 \
+
+zfs_target := \
+        $(MAKE_JOBS) \
+        DESTDIR="$(INSTALL)" \
+
+zfs_output := \
+        zfs.ko
+
+zfs_libraries := \

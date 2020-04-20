@@ -1,37 +1,51 @@
 modules-$(CONFIG_CRYPTSETUP) += cryptsetup
 
-cryptsetup_depends := util-linux popt lvm2 $(musl_dep)
+cryptsetup_depends := util-linux popt lvm2 json-c $(musl_dep)
 
-cryptsetup_version := 1.7.3
+cryptsetup_version := 2.3.1
 cryptsetup_dir := cryptsetup-$(cryptsetup_version)
 cryptsetup_tar := cryptsetup-$(cryptsetup_version).tar.xz
-cryptsetup_url := https://www.kernel.org/pub/linux/utils/cryptsetup/v1.7/cryptsetup-$(cryptsetup_version).tar.xz
-cryptsetup_hash := af2b04e8475cf40b8d9ffd97a1acfa73aa787c890430afd89804fb544d6adc02
+cryptsetup_url := https://mirrors.edge.kernel.org/pub/linux/utils/cryptsetup/v2.3/cryptsetup-$(cryptsetup_version).tar.xz
+cryptsetup_hash := 92aba4d559a2cf7043faed92e0f22c5addea36bd63f8c039ba5a8f3a159fe7d2
 
 # Use an empty prefix so that the executables will not include the
 # build path.
-cryptsetup_configure := ./configure \
-	$(CROSS_TOOLS) \
-	--host i386-elf-linux \
+cryptsetup_configure :=  \
+        $(CROSS_TOOLS) \
+	CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/install -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+	LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib -L/lib -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+	PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
+        ./configure \
+        --host i386-elf-linux \
 	--prefix "/" \
 	--disable-gcrypt-pbkdf2 \
-	--enable-cryptsetup-reencrypt \
-	--with-crypto_backend=kernel \
+        --enable-cryptsetup-reencrypt \
+        --with-crypto_backend=kernel \
+	--disable-blkid \
+	--disable-integritysetup \
+	--disable-udev \
+	--disable-veritysetup \
+	--with-sysroot=$(INSTALL) \
+	--with-libintl-prefix="/" \
+	--disable-nls
 
 # but after building, replace prefix so that they will be installed
 # in the correct directory.
 cryptsetup_target := \
 	$(MAKE_JOBS) \
+	$(CROSS_TOOLS) \
+	CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/include -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+	LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib -L/lib -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+	PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
 	&& $(MAKE) \
-		-C $(build)/$(cryptsetup_dir) \
-		prefix="$(INSTALL)" \
-		install
+	-C $(build)/$(cryptsetup_dir) \
+	$(CROSS_TOOLS) \
+	prefix="$(INSTALL)" \
+	install
 
 cryptsetup_output := \
-	src/.libs/cryptsetup \
-	src/.libs/cryptsetup-reencrypt \
-	src/.libs/veritysetup \
+        .libs/cryptsetup \
+        .libs/cryptsetup-reencrypt
 
 cryptsetup_libraries := \
-	lib/.libs/libcryptsetup.so.4 \
-
+        .libs/libcryptsetup.so.12
