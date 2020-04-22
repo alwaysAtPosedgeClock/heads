@@ -4,7 +4,6 @@ linux_version := 4.4.162
 linux_base_dir := linux-$(linux_version)
 linux_kconfig := $(or $(CONFIG_LINUX_CONFIG),config/linux.config)
 linux_dir := $(linux_base_dir)/$(notdir $(basename $(linux_kconfig)))
-linux_output += arch/x86/boot/bzImage
 
 zfs_depends := libtirpc linux $(musl_dep)
 zfs_version := 0.8.3
@@ -48,14 +47,14 @@ $(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/unicode
 $(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/zcommon/zcommon.ko)
 $(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/zfs/zfs.ko)
 
-$(build)/$(zfs_dir)/module/avl/zavl.ko: zfs
-$(build)/$(zfs_dir)/module/icp/icp.ko: zfs
-$(build)/$(zfs_dir)/module/lua/zlua.ko: zfs
-$(build)/$(zfs_dir)/module/nvpair/znvpair.ko: zfs
-$(build)/$(zfs_dir)/module/spl/spl.ko: zfs
-$(build)/$(zfs_dir)/module/unicode/zunicode.ko: zfs
-$(build)/$(zfs_dir)/module/zcommon/zcommon.ko: zfs
-$(build)/$(zfs_dir)/module/zfs/zfs.ko: zfs
+$(build)/$(zfs_dir)/module/avl/zavl.ko: linux zfs
+$(build)/$(zfs_dir)/module/icp/icp.ko: linux zfs
+$(build)/$(zfs_dir)/module/lua/zlua.ko: linux zfs
+$(build)/$(zfs_dir)/module/nvpair/znvpair.ko: linux zfs
+$(build)/$(zfs_dir)/module/spl/spl.ko: linux zfs
+$(build)/$(zfs_dir)/module/unicode/zunicode.ko: linux zfs
+$(build)/$(zfs_dir)/module/zcommon/zcommon.ko: linux zfs
+$(build)/$(zfs_dir)/module/zfs/zfs.ko: linux zfs
 
 $(module_initrd_lib_dir)/zavl.ko: $(build)/$(zfs_dir)/module/avl/zavl.ko
 	$(call do,INSTALL-MODULE,module/avl/zavl.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zavl.ko $(build)/$(zfs_dir)/module/avl/zavl.ko )
