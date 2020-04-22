@@ -12,7 +12,7 @@ cryptsetup_hash := 92aba4d559a2cf7043faed92e0f22c5addea36bd63f8c039ba5a8f3a159fe
 # build path.
 cryptsetup_configure :=  \
         $(CROSS_TOOLS) \
-	CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/install -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+	CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/usr/include -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
 	LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib -L/lib -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
 	PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
         ./configure \
@@ -34,7 +34,7 @@ cryptsetup_configure :=  \
 cryptsetup_target := \
 	$(MAKE_JOBS) \
 	$(CROSS_TOOLS) \
-	CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/include -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+	CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/usr/include -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
 	LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib -L/lib -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
 	PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
 	&& $(MAKE) \

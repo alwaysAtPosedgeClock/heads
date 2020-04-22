@@ -1,32 +1,82 @@
 modules-$(CONFIG_ZFS) += zfs
 
-zfs_depends := $(musl_dep)
+linux_version := 4.4.162
+linux_base_dir := linux-$(linux_version)
+linux_kconfig := $(or $(CONFIG_LINUX_CONFIG),config/linux.config)
+linux_dir := $(linux_base_dir)/$(notdir $(basename $(linux_kconfig)))
+linux_output += arch/x86/boot/bzImage
 
+zfs_depends := libtirpc linux $(musl_dep)
 zfs_version := 0.8.3
 zfs_dir := zfs-$(zfs_version)
 zfs_tar := zfs-$(zfs_version).tar.gz
 zfs_url := https://github.com/zfsonlinux/zfs/releases/download/zfs-$(zfs_version)/$(zfs_tar)
-
 zfs_hash := 545a4897ce30c2d2dd9010a0fdb600a0d3d45805e2387093c473efc03aa9d7fd
+zfs_modules-y += module/avl/zavl.ko module/icp/icp.ko module/lua/zlua.ko module/nvpair/znvpair.ko module/spl/spl.ko module/unicode/zunicode.ko module/zcommon/zcommon.ko module/zfs/zfs.ko
 
 zfs_configure := \
-        CROSS_COMPILE="$(CROSS)" \
+        CFLAGS="-I/root/git/heads/install/include -L/root/git/heads/install/lib $(CFLAGS)" \
+        ./autogen.sh && \
+        CFLAGS="-I/root/git/heads/install/include -L/root/git/heads/install/lib $(CFLAGS)" \
         ./configure \
-        --host i386-elf-linux \
-        --with-tirpc \
+        --disable-systemd \
         --prefix / \
         --sysconfdir=/etc \
         --mandir=/usr/share/man \
-         --infodir=/usr/share/info \
+        --infodir=/usr/share/info \
         --localstatedir=/var \
-        --with-linux=../linux-4.14.62 \
-        --with-linux-obj=../linux-4.14.62/linux-zbook-g3-15 \
+        --with-linux="$(build)/$(linux_base_dir)" \
+        --with-linux-obj="$(build)/$(linux_dir)"
 
 zfs_target := \
+        CFLAGS="-I/root/git/heads/install/include -L/root/git/heads/install/lib $(CFLAGS)" \
         $(MAKE_JOBS) \
-        DESTDIR="$(INSTALL)" \
+        DESTDIR="$(INSTALL)"
 
-zfs_output := \
-        zfs.ko
+zfs_output := $(INSTALL)/bin/zgenhostid $(INSTALL)/sbin/mount.zfs $(INSTALL)/sbin/fsck.zfs $(INSTALL)/sbin/zfs $(INSTALL)/sbin/zpool
+zfs_libraries := $(INSTALL)/lib/libblkid.so.1 $(INSTALL)/lib/libtirpc.so.3 $(INSTALL)/lib/libuuid.so.1 $(INSTALL)/lib/libz.so.1 \
+        ./lib/libnvpair/.libs/libnvpair.so.1 ./lib/libuutil/.libs/libuutil.so.1 ./lib/libzfs/.libs/libzfs.so.2 ./lib/libzfs_core/.libs/libzfs_core.so.1 \
+        /lib/ld-musl-x86_64.so.1 /lib/libc.musl-x86_64.so.1 /lib/libcom_err.so.2 /lib/libcrypto.so.1.1 /lib/libintl.so.8 /lib/libudev.so.1 \
+        /usr/lib/libgssapi_krb5.so.2 /usr/lib/libk5crypto.so.3 /usr/lib/libkeyutils.so.1 /usr/lib/libkrb5.so.3 /usr/lib/libkrb5support.so.0
 
-zfs_libraries := \
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/avl/zavl.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/icp/icp.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/lua/zlua.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/nvpair/znvpair.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/spl/spl.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/unicode/zunicode.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/zcommon/zcommon.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/zfs/zfs.ko)
+
+$(build)/$(zfs_dir)/module/avl/zavl.ko: zfs
+$(build)/$(zfs_dir)/module/icp/icp.ko: zfs
+$(build)/$(zfs_dir)/module/lua/zlua.ko: zfs
+$(build)/$(zfs_dir)/module/nvpair/znvpair.ko: zfs
+$(build)/$(zfs_dir)/module/spl/spl.ko: zfs
+$(build)/$(zfs_dir)/module/unicode/zunicode.ko: zfs
+$(build)/$(zfs_dir)/module/zcommon/zcommon.ko: zfs
+$(build)/$(zfs_dir)/module/zfs/zfs.ko: zfs
+
+$(module_initrd_lib_dir)/zavl.ko: $(build)/$(zfs_dir)/module/avl/zavl.ko
+	$(call do,INSTALL-MODULE,module/avl/zavl.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zavl.ko $(build)/$(zfs_dir)/module/avl/zavl.ko )
+
+$(module_initrd_lib_dir)/icp.ko: $(build)/$(zfs_dir)/module/icp/icp.ko
+	$(call do,INSTALL-MODULE,module/icp/icp.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/icp.ko $(build)/$(zfs_dir)/module/icp/icp.ko )
+
+$(module_initrd_lib_dir)/zlua.ko: $(build)/$(zfs_dir)/module/lua/zlua.ko
+	$(call do,INSTALL-MODULE,module/lua/zlua.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zlua.ko $(build)/$(zfs_dir)/module/lua/zlua.ko )
+
+$(module_initrd_lib_dir)/znvpair.ko: $(build)/$(zfs_dir)/module/nvpair/znvpair.ko
+	$(call do,INSTALL-MODULE,module/nvpair/znvpair.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/znvpair.ko $(build)/$(zfs_dir)/module/nvpair/znvpair.ko )
+
+$(module_initrd_lib_dir)/spl.ko: $(build)/$(zfs_dir)/module/spl/spl.ko
+	$(call do,INSTALL-MODULE,module/spl/spl.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/spl.ko $(build)/$(zfs_dir)/module/spl/spl.ko )
+
+$(module_initrd_lib_dir)/zunicode.ko: $(build)/$(zfs_dir)/module/unicode/zunicode.ko
+	$(call do,INSTALL-MODULE,module/unicode/zunicode.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zunicode.ko $(build)/$(zfs_dir)/module/unicode/zunicode.ko )
+
+$(module_initrd_lib_dir)/zcommon.ko: $(build)/$(zfs_dir)/module/zcommon/zcommon.ko
+	$(call do,INSTALL-MODULE,module/zcommon/zcommon.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zcommon.ko $(build)/$(zfs_dir)/module/zcommon/zcommon.ko )
+
+$(module_initrd_lib_dir)/zfs.ko: $(build)/$(zfs_dir)/module/zfs/zfs.ko
+	$(call do,INSTALL-MODULE,module/zfs/zfs.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zfs.ko $(build)/$(zfs_dir)/module/zfs/zfs.ko )

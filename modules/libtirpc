@@ -1,0 +1,27 @@
+modules-$(CONFIG_ZFS) += libtirpc
+libtirpc_version := 1.2.5
+libtirpc_dir := libtirpc-$(libtirpc_version)
+libtirpc_tar := libtirpc-$(libtirpc_version).tar.bz2
+libtirpc_url := https://sourceforge.net/projects/libtirpc/files/libtirpc/$(libtirpc_version)/libtirpc-$(libtirpc_version).tar.bz2
+libtirpc_hash := f3b6350c7e9c3cd9c58fc7a5e5f8e6be469cc571bb5eb31eb9790b3e675186ca
+
+libtirpc_configure := ./configure \
+	$(CROSS_TOOLS) \
+        CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/usr/include -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+        LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib -L/lib -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+        PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
+	--host x86_64-linux-musl \
+	--prefix "/" \
+	--sysconf=/etc \
+	--disable-gssapi
+
+libtirpc_target := $(MAKE_JOBS) \
+	DESTDIR="$(INSTALL)" \
+	$(CROSS_TOOLS) \
+        CFLAGS="${CFLAGS} -I$(INSTALL)/include -I/usr/include -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+        LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib -L/lib -Wl,-rpath-link,$(INSTALL)/lib:/lib" \
+        PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
+	install \
+
+libtirpc_libraries :=
+libtirpc_depends := $(musl_dep)
