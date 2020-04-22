@@ -25,3 +25,5 @@ clean
 *.fv
 *.bin
 *.bad
+blobs/*/cbfstool
+blobs/*/ifdtool
