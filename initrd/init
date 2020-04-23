@@ -51,6 +51,16 @@ if [ "$CONFIG_LINUXBOOT" = "y" ]; then
 	/bin/uefi-init
 fi
 
+if [ "$CONFIG_ZFS" = "y" ]; then
+	insmod /lib/modules/spl.ko
+	insmod /lib/modules/zlua.ko
+	insmod /lib/modules/zunicode.ko
+	insmod /lib/modules/zavl.ko
+	insmod /lib/modules/znvpair.ko
+	insmod /lib/modules/zcommon.ko
+	insmod /lib/modules/icp.ko
+	insmod /lib/modules/zfs.ko        
+fi
 # Set GPG_TTY before calling gpg in key-init
 export GPG_TTY=/dev/console
 
