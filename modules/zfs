@@ -5,7 +5,7 @@ linux_base_dir := linux-$(linux_version)
 linux_kconfig := $(or $(CONFIG_LINUX_CONFIG),config/linux.config)
 linux_dir := $(linux_base_dir)/$(notdir $(basename $(linux_kconfig)))
 
-zfs_depends := libtirpc linux $(musl_dep)
+zfs_depends := libtirpc util-linux linux $(musl_dep)
 zfs_version := 0.8.3
 zfs_dir := zfs-$(zfs_version)
 zfs_tar := zfs-$(zfs_version).tar.gz
@@ -32,20 +32,19 @@ zfs_target := \
         $(MAKE_JOBS) \
         DESTDIR="$(INSTALL)"
 
-zfs_output := $(INSTALL)/bin/zgenhostid $(INSTALL)/sbin/mount.zfs $(INSTALL)/sbin/fsck.zfs $(INSTALL)/sbin/zfs $(INSTALL)/sbin/zpool
-zfs_libraries := $(INSTALL)/lib/libblkid.so.1 $(INSTALL)/lib/libtirpc.so.3 $(INSTALL)/lib/libuuid.so.1 $(INSTALL)/lib/libz.so.1 \
-        ./lib/libnvpair/.libs/libnvpair.so.1 ./lib/libuutil/.libs/libuutil.so.1 ./lib/libzfs/.libs/libzfs.so.2 ./lib/libzfs_core/.libs/libzfs_core.so.1 \
-        /lib/ld-musl-x86_64.so.1 /lib/libc.musl-x86_64.so.1 /lib/libcom_err.so.2 /lib/libcrypto.so.1.1 /lib/libintl.so.8 /lib/libudev.so.1 \
+zfs_output := ./cmd/zgenhostid/zgenhostid ./cmd/mount_zfs/.libs/mount.zfs ./cmd/fsck_zfs/fsck.zfs ./cmd/zfs/.libs/zfs ./cmd/zpool/.libs/zpool
+zfs_libraries := ./lib/libnvpair/.libs/libnvpair.so.1 ./lib/libuutil/.libs/libuutil.so.1 ./lib/libzfs/.libs/libzfs.so.2 ./lib/libzfs_core/.libs/libzfs_core.so.1 \
+        /lib/libcom_err.so.2 /lib/libcrypto.so.1.1 /lib/libudev.so.1 \
         /usr/lib/libgssapi_krb5.so.2 /usr/lib/libk5crypto.so.3 /usr/lib/libkeyutils.so.1 /usr/lib/libkrb5.so.3 /usr/lib/libkrb5support.so.0
 
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/avl/zavl.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/icp/icp.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/lua/zlua.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/nvpair/znvpair.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/spl/spl.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/unicode/zunicode.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/zcommon/zcommon.ko)
-$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/$(notdir module/zfs/zfs.ko)
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/zavl.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/icp.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/zlua.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/znvpair.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/spl.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/zunicode.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/zcommon.ko
+$(build)/$(BOARD)/modules.cpio: $(module_initrd_lib_dir)/zfs.ko
 
 $(build)/$(zfs_dir)/module/avl/zavl.ko: linux zfs
 $(build)/$(zfs_dir)/module/icp/icp.ko: linux zfs

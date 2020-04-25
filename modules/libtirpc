@@ -23,5 +23,5 @@ libtirpc_target := $(MAKE_JOBS) \
         PKG_CONFIG_LIBDIR="$(INSTALL)/lib/pkgconfig:$(INSTALL)/lib:/lib" \
 	install \
 
-libtirpc_libraries :=
+libtirpc_libraries := ./src/.libs/libtirpc.so.3
 libtirpc_depends := $(musl_dep)
