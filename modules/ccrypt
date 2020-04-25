@@ -1,0 +1,24 @@
+modules-$(CONFIG_CCRYPT) += ccrypt
+ccrypt_version := 1.11
+ccrypt_dir := ccrypt-$(ccrypt_version)
+ccrypt_tar := ccrypt-$(ccrypt_version).tar.gz
+ccrypt_url := http://ccrypt.sourceforge.net/download/$(ccrypt_version)/$(ccrypt_tar)
+ccrypt_hash := b19c47500a96ee5fbd820f704c912f6efcc42b638c0a6aa7a4e3dc0a6b51a44f
+
+ccrypt_configure := ./configure \
+        $(CROSS_TOOLS) \
+        CFLAGS="${CFLAGS} -I$(INSTALL)/include" \
+        LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib" \
+        --prefix "/" \
+        --disable-nls
+
+ccrypt_target := $(MAKE_JOBS) \
+        DESTDIR="$(INSTALL)" \
+        $(CROSS_TOOLS) \
+        CFLAGS="${CFLAGS} -I$(INSTALL)/include" \
+        LDFLAGS="${LDFLAGS} -L$(INSTALL)/lib" \
+        install
+
+ccrypt_output := src/ccrypt
+ccrypt_libraries :=
+ccrypt_depends := $(musl_dep)

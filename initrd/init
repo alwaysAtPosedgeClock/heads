@@ -61,6 +61,16 @@ if [ "$CONFIG_ZFS" = "y" ]; then
 	insmod /lib/modules/icp.ko
 	insmod /lib/modules/zfs.ko        
 fi
+
+if [ "$CONFIG_LUKSDETACHED" = "y" ]; then
+	dd if=/dev/mmcblk0 of=/tmp/secret/mmcblk0-header.img.cpt bs=1048578 count=16
+	tpm nv_readvalue -in 4d48 -sz 312 -of /tmp/secret/mmcblk0-header.key.sealed
+	tpm unsealfile -hk 40000000 -if /tmp/secret/mmcblk0-header.key.sealed -of /tmp/secret/mmcblk0-header.key
+	base32 < /tmp/secret/mmcblk0-header.key > /tmp/secret/mmcblk0-header.key.string
+	ccrypt -d -k /tmp/secret/mmcblk0-header.key.string /tmp/secret/mmcblk0-header.img.cpt
+	cryptsetup luksOpen --header /tmp/secret/mmcblk0-header.img /dev/mmcblk0 decrypted-mmcblk0
+fi
+
 # Set GPG_TTY before calling gpg in key-init
 export GPG_TTY=/dev/console
 
