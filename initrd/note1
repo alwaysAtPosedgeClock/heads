@@ -1,0 +1,20 @@
+dd if=/dev/zero of=mmcblk0-header.img bs=16M count=1
+cryptsetup -v -c serpent-xts-plain64 -s 512 --hash whirlpool --iter-time 5000 --use-random --header ./mmcblk0-header.img --offset 32768 luksFormat /dev/mmcblk0
+dd if=/dev/random of=/dev/mmcblk0 bs=32768K count=1
+cryptsetup luksOpen --header ./mmcblk0-header.img /dev/mmcblk0 decrypted-mmcblk0
+
+
+Setup detached Header 
+dd if=/dev/zero of=/tmp/secret/mmcblk0-header.img bs=16M count=1
+cryptsetup -v -c serpent-xts-plain64 -s 512 --hash whirlpool --iter-time 5000 --use-random --header ./mmcblk0-header.img --offset 32768 luksFormat /dev/mmcblk0
+dd if=/dev/random of=/dev/mmcblk0 bs=32768K count=1
+
+read -s -p "TPM Owner password: " tpm_password
+tpm nv_definespace -in 4d48 -sz 312 -pwdo "$tpm_password" -per 0
+
+dd if=/dev/urandom of="/tmp/secret/mmcblk0-header.key" count=1 bs=20
+base32 < /tmp/secret/mmcblk0-header.key > /tmp/secret/mmcblk0-header.key.string
+tpm sealfile2 -if "/tmp/secret/mmcblk0-header.key" -of "/tmp/secret/mmcblk0-header.key.sealed" -hk 40000000 -ix 0 X
+tpm nv_writevalue -in 4d48 -if "/tmp/secret/mmcblk0-header.key.sealed"
+ccrypt -e -k /tmp/secret/mmcblk0-header.key.string /tmp/secret/mmcblk0-header.img
+dd if=/tmp/secret/mmcblk0-header.img.cpt of=/dev/mmcblk0

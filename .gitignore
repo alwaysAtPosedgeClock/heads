@@ -1,3 +1,4 @@
+config/archive*
 .*.sw*
 *.xz
 *.bz2

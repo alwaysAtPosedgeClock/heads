@@ -1,0 +1,27 @@
+modules-$(CONFIG_SEDUTIL) += sedutil
+
+sedutil_version := 1.15.1
+sedutil_dir := sedutil-tools-$(sedutil_version)
+sedutil_tar := $(sedutil_version).tar.gz
+sedutil_url := https://github.com/Drive-Trust-Alliance/sedutil/archive/$(sedutil_tar)
+
+
+sedutil_hash := 9259466b4f73af276153c5245834a56f48f8721ea7263611b5d5e8326bc43d9e
+
+sedutil_configure := autoreconf -vif && ./configure \
+        CFLAGS="${CFLAGS} -fPIE" \
+	$(CROSS_TOOLS) \
+        --host i386-elf-linux \
+        --target x86_64 \
+        --prefix="/"
+
+sedutil_target := \
+	CFLAGS="${CFLAGS} -fPIE" \
+        $(MAKE_JOBS) \
+        $(CROSS_TOOLS) \
+        DESTDIR="$(INSTALL)" \
+        install \
+
+sedutil_output := ./sedutil-cli ./linuxpba
+sedutil_libraries := /usr/lib/libstdc++.so.6 /usr/lib/libgcc_s.so.1
+sedutil_depends := $(musl_dep)

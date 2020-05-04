@@ -12,7 +12,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 # PCRs if this happens to prevent the TPM disk keys from being revealed.
 
 # First thing it is vital to mount the /dev and other system directories
-mkdir /proc /sys /dev /tmp /boot /media 2>&- 1>&-
+mkdir /proc /sys /run /dev /tmp /boot /media 2>&- 1>&-
 mount /dev 2>/dev/ttyprintk
 mount /proc 2>/dev/ttyprintk
 mount /sys 2>/dev/ttyprintk
@@ -51,25 +51,25 @@ if [ "$CONFIG_LINUXBOOT" = "y" ]; then
 	/bin/uefi-init
 fi
 
-if [ "$CONFIG_ZFS" = "y" ]; then
-	insmod /lib/modules/spl.ko
-	insmod /lib/modules/zlua.ko
-	insmod /lib/modules/zunicode.ko
-	insmod /lib/modules/zavl.ko
-	insmod /lib/modules/znvpair.ko
-	insmod /lib/modules/zcommon.ko
-	insmod /lib/modules/icp.ko
-	insmod /lib/modules/zfs.ko        
-fi
+#if [ "$CONFIG_ZFS" = "y" ]; then
+#	insmod /lib/modules/spl.ko
+#	insmod /lib/modules/zlua.ko
+#	insmod /lib/modules/zunicode.ko
+#	insmod /lib/modules/zavl.ko
+#	insmod /lib/modules/znvpair.ko
+#	insmod /lib/modules/zcommon.ko
+#	insmod /lib/modules/icp.ko
+#	insmod /lib/modules/zfs.ko        
+#fi
 
-if [ "$CONFIG_LUKSDETACHED" = "y" ]; then
-	dd if=/dev/mmcblk0 of=/tmp/secret/mmcblk0-header.img.cpt bs=1048578 count=16
-	tpm nv_readvalue -in 4d48 -sz 312 -of /tmp/secret/mmcblk0-header.key.sealed
-	tpm unsealfile -hk 40000000 -if /tmp/secret/mmcblk0-header.key.sealed -of /tmp/secret/mmcblk0-header.key
-	base32 < /tmp/secret/mmcblk0-header.key > /tmp/secret/mmcblk0-header.key.string
-	ccrypt -d -k /tmp/secret/mmcblk0-header.key.string /tmp/secret/mmcblk0-header.img.cpt
-	cryptsetup luksOpen --header /tmp/secret/mmcblk0-header.img /dev/mmcblk0 decrypted-mmcblk0
-fi
+#if [ "$CONFIG_LUKSDETACHED" = "y" ]; then
+#	dd if=/dev/mmcblk0 of=/tmp/secret/mmcblk0-header.img.cpt bs=1048578 count=16
+#	tpm nv_readvalue -in 4d48 -sz 312 -of /tmp/secret/mmcblk0-header.key.sealed
+#	tpm unsealfile -hk 40000000 -if /tmp/secret/mmcblk0-header.key.sealed -of /tmp/secret/mmcblk0-header.key
+#	base32 < /tmp/secret/mmcblk0-header.key > /tmp/secret/mmcblk0-header.key.string
+#	ccrypt -d -k /tmp/secret/mmcblk0-header.key.string /tmp/secret/mmcblk0-header.img.cpt
+#	cryptsetup luksOpen --header /tmp/secret/mmcblk0-header.img /dev/mmcblk0 decrypted-mmcblk0
+#fi
 
 # Set GPG_TTY before calling gpg in key-init
 export GPG_TTY=/dev/console

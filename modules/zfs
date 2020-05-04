@@ -1,6 +1,6 @@
 modules-$(CONFIG_ZFS) += zfs
 
-linux_version := 4.4.162
+linux_version := 4.14.62
 linux_base_dir := linux-$(linux_version)
 linux_kconfig := $(or $(CONFIG_LINUX_CONFIG),config/linux.config)
 linux_dir := $(linux_base_dir)/$(notdir $(basename $(linux_kconfig)))
@@ -56,25 +56,33 @@ $(build)/$(zfs_dir)/module/zcommon/zcommon.ko: linux zfs
 $(build)/$(zfs_dir)/module/zfs/zfs.ko: linux zfs
 
 $(module_initrd_lib_dir)/zavl.ko: $(build)/$(zfs_dir)/module/avl/zavl.ko
-	$(call do,INSTALL-MODULE,module/avl/zavl.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zavl.ko $(build)/$(zfs_dir)/module/avl/zavl.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/avl/zavl.ko
+	$(call do,INSTALL-MODULE,module/avl/zavl.ko, cp $(build)/$(zfs_dir)/module/avl/zavl.ko $(module_initrd_lib_dir)/zavl.ko)
 
 $(module_initrd_lib_dir)/icp.ko: $(build)/$(zfs_dir)/module/icp/icp.ko
-	$(call do,INSTALL-MODULE,module/icp/icp.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/icp.ko $(build)/$(zfs_dir)/module/icp/icp.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/icp/icp.ko
+	$(call do,INSTALL-MODULE,module/icp/icp.ko, cp $(build)/$(zfs_dir)/module/icp/icp.ko $(module_initrd_lib_dir)/icp.ko)
 
 $(module_initrd_lib_dir)/zlua.ko: $(build)/$(zfs_dir)/module/lua/zlua.ko
-	$(call do,INSTALL-MODULE,module/lua/zlua.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zlua.ko $(build)/$(zfs_dir)/module/lua/zlua.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/lua/zlua.ko
+	$(call do,INSTALL-MODULE,module/lua/zlua.ko, cp $(build)/$(zfs_dir)/module/lua/zlua.ko $(module_initrd_lib_dir)/zlua.ko)
 
 $(module_initrd_lib_dir)/znvpair.ko: $(build)/$(zfs_dir)/module/nvpair/znvpair.ko
-	$(call do,INSTALL-MODULE,module/nvpair/znvpair.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/znvpair.ko $(build)/$(zfs_dir)/module/nvpair/znvpair.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/nvpair/znvpair.ko
+	$(call do,INSTALL-MODULE,module/nvpair/znvpair.ko, cp $(build)/$(zfs_dir)/module/nvpair/znvpair.ko $(module_initrd_lib_dir)/znvpair.ko)
 
 $(module_initrd_lib_dir)/spl.ko: $(build)/$(zfs_dir)/module/spl/spl.ko
-	$(call do,INSTALL-MODULE,module/spl/spl.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/spl.ko $(build)/$(zfs_dir)/module/spl/spl.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/spl/spl.ko
+	$(call do,INSTALL-MODULE,module/spl/spl.ko, cp $(build)/$(zfs_dir)/module/spl/spl.ko $(module_initrd_lib_dir)/spl.ko)
 
 $(module_initrd_lib_dir)/zunicode.ko: $(build)/$(zfs_dir)/module/unicode/zunicode.ko
-	$(call do,INSTALL-MODULE,module/unicode/zunicode.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zunicode.ko $(build)/$(zfs_dir)/module/unicode/zunicode.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/unicode/zunicode.ko
+	$(call do,INSTALL-MODULE,module/unicode/zunicode.ko, cp $(build)/$(zfs_dir)/module/unicode/zunicode.ko $(module_initrd_lib_dir)/zunicode.ko)
 
 $(module_initrd_lib_dir)/zcommon.ko: $(build)/$(zfs_dir)/module/zcommon/zcommon.ko
-	$(call do,INSTALL-MODULE,module/zcommon/zcommon.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zcommon.ko $(build)/$(zfs_dir)/module/zcommon/zcommon.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/zcommon/zcommon.ko
+	$(call do,INSTALL-MODULE,module/zcommon/zcommon.ko, cp $(build)/$(zfs_dir)/module/zcommon/zcommon.ko $(module_initrd_lib_dir)/zcommon.ko)
 
 $(module_initrd_lib_dir)/zfs.ko: $(build)/$(zfs_dir)/module/zfs/zfs.ko
-	$(call do,INSTALL-MODULE,module/zfs/zfs.ko, $(CROSS)strip --preserve-dates --strip-debug -o $(module_initrd_lib_dir)/zfs.ko $(build)/$(zfs_dir)/module/zfs/zfs.ko )
+	$(build)/$(linux_dir)/scripts/sign-file sha512 $(build)/$(linux_dir)/certs/signing_key.pem $(build)/$(linux_dir)/certs/signing_key.x509 $(build)/$(zfs_dir)/module/zfs/zfs.ko
+	$(call do,INSTALL-MODULE,module/zfs/zfs.ko, cp $(build)/$(zfs_dir)/module/zfs/zfs.ko $(module_initrd_lib_dir)/zfs.ko)

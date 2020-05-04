@@ -432,7 +432,7 @@ bin_modules-$(CONFIG_LIBREMKEY) += libremkey-hotp-verification
 bin_modules-$(CONFIG_MSRTOOLS) += msrtools
 bin_modules-$(CONFIG_ZFS) += zfs
 bin_modules-$(CONFIG_CCRYPT) += ccrypt
-
+bin_modules-$(CONFIG_SEDUTIL) += sedutil
 $(foreach m, $(bin_modules-y), \
 	$(call map,initrd_bin_add,$(call bins,$m)) \
 )
