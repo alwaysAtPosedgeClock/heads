@@ -1,147 +1,90 @@
 #!/bin/ash
-mknod /dev/ttyprintk c 5 3
-echo "hello world" > /dev/ttyprintk
 
-# Setup our path
+##############################################
+# Shared Variables                           #
+##############################################
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+last_half=X
+unset totp_confirm
 
-# This is the very first script invoked by the Linux kernel and is
-# running out of the ram disk.  There are no fileysstems mounted.
-# It is important to have a way to invoke a recovery shell in case
-# the boot scripts are messed up, but also important to modify the
-# PCRs if this happens to prevent the TPM disk keys from being revealed.
-
-# First thing it is vital to mount the /dev and other system directories
-mkdir /proc /sys /run /dev /tmp /boot /media 2>&- 1>&-
+#########################################################
+# Create Directories, Mount Filesystems, Create Devices #
+#########################################################
+mknod /dev/ttyprintk c 5 3
+echo "Heads Output Initialized" > /dev/ttyprintk
+mkdir /proc /sys /run /tmp /boot /media 2>&- 1>&-
+mkdir -p /tmp/secret
 mount /dev 2>/dev/ttyprintk
 mount /proc 2>/dev/ttyprintk
 mount /sys 2>/dev/ttyprintk
-if [ "$CONFIG_LINUXBOOT" = "y" ]; then
-	mount /sys/firmware/efi/efivars
-fi
+mount -t efivarfs efivarfs /sys/firmware/efi/efivars 2>/dev/ttyprintk
+mount -t securityfs security /sys/kernel/security 2>/dev/ttyprintk
 
-# Setup the pty psudeo filesystem
-mkdir /dev/pts
-mount /dev/pts 2>/dev/ttyprintk
-
-if [ ! -r /dev/ptmx ]; then
-	ln -s /dev/pts/ptmx /dev/ptmx
-fi
-
-# Recovery shells will erase anything from here
-mkdir -p /tmp/secret
-
-# Now it is safe to print a banner
-if [ -r /etc/motd ]; then
-	cat /etc/motd
-	cat /etc/motd > /dev/tty0
-fi
-
-# Load the date from the hardware clock, setting it in local time
+################################################################
+# Show Initial Message, Setup Clock, Pull in functions/config  #
+################################################################
+cat /etc/motd
+cat /etc/motd > /dev/tty0
 hwclock -l -s
-
-# Read the system configuration parameters
 . /etc/functions
-. /etc/config
-
-if [ "$CONFIG_COREBOOT" = "y" ]; then
-	/bin/cbfs-init
+cat /etc/config* > /tmp/config
+. /tmp/config
+ 
+###############
+# Enable ZFS  #
+###############
+if [ "$CONFIG_ZFS" = "y" ]; then
+        insmod /lib/modules/spl.ko
+        insmod /lib/modules/zlua.ko
+        insmod /lib/modules/zunicode.ko
+        insmod /lib/modules/zavl.ko
+        insmod /lib/modules/znvpair.ko
+        insmod /lib/modules/zcommon.ko
+        insmod /lib/modules/icp.ko
+        insmod /lib/modules/zfs.ko
 fi
-if [ "$CONFIG_LINUXBOOT" = "y" ]; then
-	/bin/uefi-init
-fi
 
-#if [ "$CONFIG_ZFS" = "y" ]; then
-#	insmod /lib/modules/spl.ko
-#	insmod /lib/modules/zlua.ko
-#	insmod /lib/modules/zunicode.ko
-#	insmod /lib/modules/zavl.ko
-#	insmod /lib/modules/znvpair.ko
-#	insmod /lib/modules/zcommon.ko
-#	insmod /lib/modules/icp.ko
-#	insmod /lib/modules/zfs.ko        
-#fi
-
-#if [ "$CONFIG_LUKSDETACHED" = "y" ]; then
-#	dd if=/dev/mmcblk0 of=/tmp/secret/mmcblk0-header.img.cpt bs=1048578 count=16
-#	tpm nv_readvalue -in 4d48 -sz 312 -of /tmp/secret/mmcblk0-header.key.sealed
-#	tpm unsealfile -hk 40000000 -if /tmp/secret/mmcblk0-header.key.sealed -of /tmp/secret/mmcblk0-header.key
-#	base32 < /tmp/secret/mmcblk0-header.key > /tmp/secret/mmcblk0-header.key.string
-#	ccrypt -d -k /tmp/secret/mmcblk0-header.key.string /tmp/secret/mmcblk0-header.img.cpt
-#	cryptsetup luksOpen --header /tmp/secret/mmcblk0-header.img /dev/mmcblk0 decrypted-mmcblk0
-#fi
-
-# Set GPG_TTY before calling gpg in key-init
+##############
+# Setup GPG  #
+##############
 export GPG_TTY=/dev/console
+gpg --import /.gnupg/keys/*.key  /.gnupg/keys/*.asc 2>/dev/null || true
 
-/bin/key-init
-
-# Setup recovery serial shell
-if [ ! -z "$CONFIG_BOOT_RECOVERY_SERIAL" ]; then
-	stty -F "$CONFIG_BOOT_RECOVERY_SERIAL" 115200
-	pause_recovery 'Console recovery shell' \
-		< "$CONFIG_BOOT_RECOVERY_SERIAL" \
-		> "$CONFIG_BOOT_RECOVERY_SERIAL" 2>&1 &
+################
+# Setup FSTAB  #
+################ 
+if [ ! -z "$CONFIG_BOOT_DEV" ]; then
+        echo >> /etc/fstab "$CONFIG_BOOT_DEV /boot auto defaults,ro 0 0"
 fi
 
-# load USB modules for boards using a USB keyboard
-if [ "$CONFIG_USB_KEYBOARD" = "y" ]; then
-	enable_usb
-fi
+######################
+#Stage1: Verify TOTP #
+######################
+while true; do
+        date=`date "+%Y-%m-%d %H:%M:%S"`
+        seconds=`date "+%s"`
+        half=`expr \( $seconds % 60 \) / 30`
+        if [ "$half" != "$last_half" ]; then
+                last_half=$half;
+                tpm nv_readvalue -in 4d47 -sz 312 -of "/tmp/secret/totp.sealed"
+                tpm unsealfile -hk 40000000 -if "/tmp/secret/totp.sealed" -of "/tmp/secret/totp.key"
+                shred -n 10 -z -u "/tmp/secret/totp.sealed"
+                TOTP=`totp -q < "/tmp/secret/totp.key"`
+                shred -n 10 -z -u "/tmp/secret/totp.key"
 
-# If the user has been holding down r, enter a recovery shell
-# otherwise immediately start the configured boot script.
-# We don't print a prompt, since this is a near instant timeout.
-read \
-	-t 0.1 \
-	-n 1 \
-	boot_option
+        fi
+
+        echo -n "$date $TOTP: "
+        read -t 1 -n 1 -s -p "Verify TOTP before continuing" totp_confirm && break
+        echo -ne '\r'
+done
+
 echo
 
-if [ "$boot_option" = "r" ]; then
-	# Start an interactive shell
-	recovery 'User requested recovery shell'
-	# just in case...
-	if [ "$CONFIG_TPM" = "y" ]; then
-		tpm extend -ix 4 -ic recovery
-	fi
-	exec /bin/ash
-	exit
-fi
-
-combine_configs
-. /tmp/config
-
-# Add our boot devices into the /etc/fstab, if they are defined
-# in the configuration file.
-if [ ! -z "$CONFIG_BOOT_DEV" ]; then
-	echo >> /etc/fstab "$CONFIG_BOOT_DEV /boot auto defaults,ro 0 0"
-fi
-
-if [ ! -x "$CONFIG_BOOTSCRIPT" -a ! -x "$CONFIG_BOOTSCRIPT_NETWORK" ]; then
-	recovery 'Boot script missing?  Entering recovery shell'
-else
-	if [ -x "$CONFIG_BOOTSCRIPT_NETWORK" ]; then
-		echo '***** Network Boot:' $CONFIG_BOOTSCRIPT_NETWORK
-		$CONFIG_BOOTSCRIPT_NETWORK
-		echo '***** Network Boot Completed:' $CONFIG_BOOTSCRIPT_NETWORK
-		# not blocking
-	fi
-
-	if [ -x "$CONFIG_BOOTSCRIPT" ]; then
-		echo '***** Normal boot:' $CONFIG_BOOTSCRIPT
-		exec "$CONFIG_BOOTSCRIPT"
-
-		# We should never reach here, but just in case...
-		recovery 'Boot script failure?  Entering recovery shell'
-	else
-		# wait for boot via network to occur
-		pause_recovery 'Override network boot. Entering recovery shell'
-	fi
-fi
-
-# belts and suspenders, just in case...
+################################################################
+# Should Not Reach this point in script, secure TPM if you do  #
+################################################################
 if [ "$CONFIG_TPM" = "y" ]; then
-	tpm extend -ix 4 -ic recovery
+        tpm extend -ix 4 -ic recovery
 fi
 exec /bin/ash
