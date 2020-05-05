@@ -82,7 +82,19 @@ while true; do
         echo -ne '\r'
 done
 
-echo
+echo "DO NOT enter password unless TOTP codes matched!!!!"
+
+
+################################################################
+# Open Encrypted Volume with Detached Header                   #
+################################################################
+dd if=/dev/mmcblk0 of=/tmp/secret/mmcblk0-header.img.cpt bs=1048578 count=16
+tpm nv_readvalue -in 4d48 -sz 312 -of /tmp/secret/mmcblk0-header.key.sealed
+tpm unsealfile -hk 40000000 -if /tmp/secret/mmcblk0-header.key.sealed -of /tmp/secret/mmcblk0-header.key
+base32 < /tmp/secret/mmcblk0-header.key > /tmp/secret/mmcblk0-header.key.string
+ccrypt -d -k /tmp/secret/mmcblk0-header.key.string /tmp/secret/mmcblk0-header.img.cpt
+cryptsetup luksOpen --header /tmp/secret/mmcblk0-header.img /dev/mmcblk0 decrypted-mmcblk0
+
 
 ################################################################
 # Should Not Reach this point in script, secure TPM if you do  #
