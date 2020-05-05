@@ -34,14 +34,18 @@ cat /etc/config* > /tmp/config
 # Enable ZFS  #
 ###############
 if [ "$CONFIG_ZFS" = "y" ]; then
-        insmod /lib/modules/spl.ko
-        insmod /lib/modules/zlua.ko
-        insmod /lib/modules/zunicode.ko
-        insmod /lib/modules/zavl.ko
-        insmod /lib/modules/znvpair.ko
-        insmod /lib/modules/zcommon.ko
-        insmod /lib/modules/icp.ko
-        insmod /lib/modules/zfs.ko
+        insmod /lib/modules/spl.ko 2>/dev/ttyprintk
+        insmod /lib/modules/zlua.ko 2>/dev/ttyprintk
+        insmod /lib/modules/zunicode.ko 2>/dev/ttyprintk
+        insmod /lib/modules/zavl.ko 2>/dev/ttyprintk
+        insmod /lib/modules/znvpair.ko 2>/dev/ttyprintk
+        insmod /lib/modules/zcommon.ko 2>/dev/ttyprintk
+        insmod /lib/modules/icp.ko 2>/dev/ttyprintk
+        insmod /lib/modules/zfs.ko 2>/dev/ttyprintk
+	insmod /lib/modules/ehci-hcd.ko 2>/dev/ttyprintk
+	insmod /lib/modules/ehci-pci.ko 2>/dev/ttyprintk
+	insmod /lib/modules/xhci-hcd.ko 2>/dev/ttyprintk
+	insmod /lib/modules/xhci-pci.ko 2>/dev/ttyprintk
 fi
 
 ##############
