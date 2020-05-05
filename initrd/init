@@ -24,7 +24,6 @@ mount -t securityfs security /sys/kernel/security 2>/dev/ttyprintk
 # Show Initial Message, Setup Clock, Pull in functions/config  #
 ################################################################
 cat /etc/motd
-cat /etc/motd > /dev/tty0
 hwclock -l -s
 . /etc/functions
 cat /etc/config* > /tmp/config
